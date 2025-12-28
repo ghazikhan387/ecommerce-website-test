@@ -1,0 +1,108 @@
+# Dependencies
+node_modules/
+*/node_modules/
+client/node_modules/
+server/node_modules/
+
+# Environment Variables
+.env
+.env.local
+.env.development
+.env.development.local
+.env.test
+.env.test.local
+.env.production
+.env.production.local
+
+# Build outputs
+dist/
+build/
+*.log
+*.tgz
+
+# Production
+/build
+/dist
+/.next
+/out
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-project
+*.sublime-workspace
+
+# OS Files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Testing
+coverage/
+*.cover
+.nyc_output
+.cache
+
+# Package manager
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+.yarn/
+.pnpm-store/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+pgdata/
+server/pgdata/
+pgpass.txt
+server/pgpass.txt
+
+# Database error logs
+*-error.log
+prisma-error.log
+
+# Misc
+.cache/
+.temp/
+.tmp/
+*.pid
+*.seed
+*.pid.lock
+
+# Service and debug files
+*.csv
+services.txt
+running_services.txt
+running_services.csv
+
+# Test and debug scripts (optional - uncomment if you don't want to commit these)
+# check-db.js
+# check-tables.js
+# test-*.js
+# minimal-server.js
+# sync-*.js
+
+# Docker
+.dockerignore
+
+# Prisma
+prisma/migrations/

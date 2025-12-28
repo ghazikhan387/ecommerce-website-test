@@ -1,0 +1,235 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         Int        @id @default(autoincrement())
+  name       String
+  email      String     @unique
+  password   String
+  role       UserRole
+  branchId   Int?
+  customerId Int?
+  allowedIPs String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  auditLogs  AuditLog[]
+  branch     Branch?    @relation(fields: [branchId], references: [id])
+  customer   Customer?  @relation(fields: [customerId], references: [id])
+
+  @@index([branchId])
+  @@index([customerId])
+  @@index([email])
+}
+
+model Branch {
+  id           Int         @id @default(autoincrement())
+  name         String
+  address      String
+  isHeadOffice Boolean     @default(false)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  customers    Customer[]
+  users        User[]
+  warehouses   Warehouse[]
+
+  @@index([isHeadOffice])
+}
+
+model Warehouse {
+  id        Int         @id @default(autoincrement())
+  name      String
+  branchId  Int
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  inventory Inventory[]
+  branch    Branch      @relation(fields: [branchId], references: [id], onDelete: Cascade)
+
+  @@index([branchId])
+}
+
+model Customer {
+  id                Int          @id @default(autoincrement())
+  name              String
+  gstNumber         String?
+  creditLimit       Float        @default(0)
+  outstandingAmount Float        @default(0)
+  discountPercent   Float        @default(0)
+  branchId          Int
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+  branch            Branch       @relation(fields: [branchId], references: [id], onDelete: Cascade)
+  salesOrders       SalesOrder[]
+  users             User[]
+
+  @@index([branchId])
+  @@index([gstNumber])
+}
+
+model Supplier {
+  id          Int        @id @default(autoincrement())
+  name        String
+  contactInfo String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  purchases   Purchase[]
+}
+
+model BookTitle {
+  id              Int              @id @default(autoincrement())
+  isbn            String           @unique
+  title           String
+  author          String
+  publisher       String
+  price           Float
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  inventory       Inventory[]
+  purchaseItems   PurchaseItem[]
+  salesOrderItems SalesOrderItem[]
+
+  @@index([isbn])
+  @@index([title])
+}
+
+model Inventory {
+  id          Int       @id @default(autoincrement())
+  bookTitleId Int
+  warehouseId Int
+  quantity    Int       @default(0)
+  minStock    Int       @default(0)
+  maxStock    Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  bookTitle   BookTitle @relation(fields: [bookTitleId], references: [id], onDelete: Cascade)
+  warehouse   Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
+
+  @@unique([bookTitleId, warehouseId])
+  @@index([bookTitleId])
+  @@index([warehouseId])
+  @@index([quantity])
+}
+
+model Purchase {
+  id            Int            @id @default(autoincrement())
+  supplierId    Int
+  status        PurchaseStatus @default(PENDING)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  supplier      Supplier       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  purchaseItems PurchaseItem[]
+
+  @@index([supplierId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model PurchaseItem {
+  id          Int       @id @default(autoincrement())
+  purchaseId  Int
+  bookTitleId Int
+  quantity    Int
+  costPrice   Float
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  bookTitle   BookTitle @relation(fields: [bookTitleId], references: [id], onDelete: Cascade)
+  purchase    Purchase  @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+
+  @@index([purchaseId])
+  @@index([bookTitleId])
+}
+
+model SalesOrder {
+  id               Int              @id @default(autoincrement())
+  customerId       Int
+  status           SalesOrderStatus @default(PROFORMA)
+  totalAmount      Float            @default(0)
+  requiresApproval Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  invoice          Invoice?
+  customer         Customer         @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  salesOrderItems  SalesOrderItem[]
+
+  @@index([customerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model SalesOrderItem {
+  id           Int        @id @default(autoincrement())
+  salesOrderId Int
+  bookTitleId  Int
+  quantity     Int
+  sellingPrice Float
+  discount     Float      @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  bookTitle    BookTitle  @relation(fields: [bookTitleId], references: [id], onDelete: Cascade)
+  salesOrder   SalesOrder @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+
+  @@index([salesOrderId])
+  @@index([bookTitleId])
+}
+
+model Invoice {
+  id            Int         @id @default(autoincrement())
+  salesOrderId  Int         @unique
+  invoiceNumber String      @unique
+  invoiceType   InvoiceType
+  gstAmount     Float       @default(0)
+  totalAmount   Float
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  salesOrder    SalesOrder  @relation(fields: [salesOrderId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceNumber])
+  @@index([invoiceType])
+  @@index([createdAt])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  action    String
+  entity    String
+  entityId  String
+  details   String?
+  userId    Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+enum UserRole {
+  ADMIN
+  HO
+  BRANCH
+  SALES
+  CUSTOMER
+}
+
+enum PurchaseStatus {
+  PENDING
+  APPROVED
+  RECEIVED
+}
+
+enum SalesOrderStatus {
+  PROFORMA
+  CONFIRMED
+  INVOICED
+}
+
+enum InvoiceType {
+  CASH
+  CREDIT
+  EXPORT
+}
